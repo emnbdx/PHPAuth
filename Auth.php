@@ -3,7 +3,8 @@
 namespace PHPAuth;
 
 use ZxcvbnPhp\Zxcvbn;
-use PHPMailer\PHPMailer\PHPMailer;
+use \Mailjet\Client;
+use \Mailjet\Resources;
 use ReCaptcha\ReCaptcha;
 
 /*require_once 'AuthInterface.php';*/
@@ -1713,65 +1714,54 @@ VALUES (:uid, :hash, :expiredate, :ip, :agent, :cookie_crc)
         $return = [
             'error' => true
         ];
-        $mail = new PHPMailer();
-
-        // Check configuration for custom SMTP parameters
-        try {
-            // Server settings
-            if ($this->config->smtp) {
-
-                if ($this->config->smtp_debug) {
-                    $mail->SMTPDebug = $this->config->smtp_debug;
-                }
-
-                $mail->isSMTP();
-
-                $mail->Host = $this->config->smtp_host;
-                $mail->SMTPAuth = $this->config->smtp_auth;
-
-                // set SMTP auth username/password
-                if (!is_null($this->config->smtp_auth)) {
-                    $mail->Username = $this->config->smtp_username;
-                    $mail->Password = $this->config->smtp_password;
-                }
-
-                // set SMTPSecure (tls|ssl)
-                if (!is_null($this->config->smtp_security)) {
-                    $mail->SMTPSecure = $this->config->smtp_security;
-                }
-
-                $mail->Port = $this->config->smtp_port;
-            } //without this params internal mailer will be used.
-
-            //Recipients
-            $mail->setFrom($this->config->site_email, $this->config->site_name);
-            $mail->addAddress($email);
-
-            $mail->CharSet = $this->config->mail_charset;
-
-            //Content
-            $mail->isHTML(true);
-
-            if ($type == 'activation') {
-                $mail->Subject  = $this->__lang('email_activation_subject', $this->config->site_name);
-                $mail->Body     = $this->__lang('email_activation_body', $this->config->site_url, $this->config->site_activation_page, $key);
-                $mail->AltBody  = $this->__lang('email_activation_altbody', $this->config->site_url, $this->config->site_activation_page, $key);
-            } elseif ($type == 'reset') {
-                $mail->Subject  = $this->__lang('email_reset_subject', $this->config->site_name);
-                $mail->Body     = $this->__lang('email_reset_body', $this->config->site_url, $this->config->site_password_reset_page, $key);
-                $mail->AltBody  = $this->__lang('email_reset_altbody', $this->config->site_url, $this->config->site_password_reset_page, $key);
-            } else {
-                return false;
-            }
-
-            if (!$mail->send())
-                throw new \Exception($mail->ErrorInfo);
-
-            $return['error'] = false;
-
-        } catch (\Exception $e) {
-            $return['message'] = $mail->ErrorInfo;
+        $client = new Client($this->config->mailjet_public, $this->config->mailjet_private, true, ['version' => 'v3.1']);
+        if ($type == 'activation') {
+            $body = [
+                'Messages' => [
+                    [
+                        'From' => [
+                            'Email' => $this->config->site_email,
+                            'Name' => $this->config->site_name
+                        ],
+                        'To' => [
+                            [
+                                'Email' => $email,
+                            ]
+                        ],
+                        'Subject' => $this->__lang('email_activation_subject', $this->config->site_name),
+                        'TextPart' => $this->__lang('email_activation_altbody', $this->config->site_url, $this->config->site_activation_page, $key),
+                        'HTMLPart' => $this->__lang('email_activation_body', $this->config->site_url, $this->config->site_activation_page, $key)
+                    ]
+                ]
+            ];
+        } elseif ($type == 'reset') {
+            $body = [
+                'Messages' => [
+                    [
+                        'From' => [
+                            'Email' => $this->config->site_email,
+                            'Name' => $this->config->site_name
+                        ],
+                        'To' => [
+                            [
+                                'Email' => $email,
+                            ]
+                        ],
+                        'Subject' => $this->__lang('email_reset_subject', $this->config->site_name),
+                        'TextPart' => $this->__lang('email_reset_altbody', $this->config->site_url, $this->config->site_password_reset_page, $key),
+                        'HTMLPart' => $this->__lang('email_reset_body', $this->config->site_url, $this->config->site_password_reset_page, $key)
+                    ]
+                ]
+            ];
+        } else {
+            return false;
         }
+
+        $response = $client->post(Resources::$Email, ['body' => $body]);
+        if (!$response->success())
+            throw new \Exception($response->getData());
+
+        $return['error'] = false;
 
         return $return;
     }
