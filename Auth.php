@@ -3,8 +3,6 @@
 namespace PHPAuth;
 
 use ZxcvbnPhp\Zxcvbn;
-use \Mailjet\Client;
-use \Mailjet\Resources;
 use ReCaptcha\ReCaptcha;
 
 /*require_once 'AuthInterface.php';*/
@@ -1702,7 +1700,7 @@ VALUES (:uid, :hash, :expiredate, :ip, :agent, :cookie_crc)
 
 
     /**
-     * Send email via PHPMailer
+     * Prepare email before send
      *
      * @param $email
      * @param $type
@@ -1714,56 +1712,127 @@ VALUES (:uid, :hash, :expiredate, :ip, :agent, :cookie_crc)
         $return = [
             'error' => true
         ];
-        $client = new Client($this->config->mailjet_public, $this->config->mailjet_private, true, ['version' => 'v3.1']);
-        if ($type == 'activation') {
-            $body = [
-                'Messages' => [
-                    [
-                        'From' => [
-                            'Email' => $this->config->site_email,
-                            'Name' => $this->config->site_name
-                        ],
-                        'To' => [
-                            [
-                                'Email' => $email,
-                            ]
-                        ],
-                        'Subject' => $this->__lang('email_activation_subject', $this->config->site_name),
-                        'TextPart' => $this->__lang('email_activation_altbody', $this->config->site_url, $this->config->site_activation_page, $key),
-                        'HTMLPart' => $this->__lang('email_activation_body', $this->config->site_url, $this->config->site_activation_page, $key)
-                    ]
-                ]
-            ];
-        } elseif ($type == 'reset') {
-            $body = [
-                'Messages' => [
-                    [
-                        'From' => [
-                            'Email' => $this->config->site_email,
-                            'Name' => $this->config->site_name
-                        ],
-                        'To' => [
-                            [
-                                'Email' => $email,
-                            ]
-                        ],
-                        'Subject' => $this->__lang('email_reset_subject', $this->config->site_name),
-                        'TextPart' => $this->__lang('email_reset_altbody', $this->config->site_url, $this->config->site_password_reset_page, $key),
-                        'HTMLPart' => $this->__lang('email_reset_body', $this->config->site_url, $this->config->site_password_reset_page, $key)
-                    ]
-                ]
-            ];
-        } else {
-            return false;
+
+        try
+        {        
+            if ($type == 'activation') {
+                $this->sendMail($this->config->email_mode, 
+                    $email,
+                    $this->__lang('email_activation_subject', $this->config->site_name), 
+                    $this->__lang('email_activation_body', $this->config->site_url, $this->config->site_activation_page, $key), 
+                    $this->__lang('email_activation_altbody', $this->config->site_url, $this->config->site_activation_page, $key));
+            } elseif ($type == 'reset') {
+                $this->sendMail($this->config->email_mode,
+                    $email,
+                    $this->__lang('email_reset_subject', $this->config->site_name), 
+                    $this->__lang('email_reset_body', $this->config->site_url, $this->config->site_password_reset_page, $key), 
+                    $this->__lang('email_reset_altbody', $this->config->site_url, $this->config->site_password_reset_page, $key));
+            } else {
+                return false;
+            }
+
+            $return['error'] = false;
+        } catch (\Exception $e) {
+            $return['message'] = $e;
         }
 
-        $response = $client->post(Resources::$Email, ['body' => $body]);
-        if (!$response->success())
-            throw new \Exception($response->getData());
-
-        $return['error'] = false;
-
         return $return;
+    }
+
+    /**
+     * Send mail with configured API or smtp
+     * supported mailjet and sengrid
+     * 
+     * @param $mode
+     * @param $to
+     * @param $subject
+     * @param $body
+     * @param $text
+     */
+    private function sendMail($mode, $to, $subject, $body, $text)
+    {
+        if($mode == "smtp") {
+            $mail = new PHPMailer\PHPMailer\PHPMailer();
+
+            // Check configuration for custom SMTP parameters
+            // Server settings
+            if ($this->config->smtp) {
+
+                if ($this->config->smtp_debug) {
+                    $mail->SMTPDebug = $this->config->smtp_debug;
+                }
+
+                $mail->isSMTP();
+
+                $mail->Host = $this->config->smtp_host;
+                $mail->SMTPAuth = $this->config->smtp_auth;
+
+                // set SMTP auth username/password
+                if (!is_null($this->config->smtp_auth)) {
+                    $mail->Username = $this->config->smtp_username;
+                    $mail->Password = $this->config->smtp_password;
+                }
+
+                // set SMTPSecure (tls|ssl)
+                if (!is_null($this->config->smtp_security)) {
+                    $mail->SMTPSecure = $this->config->smtp_security;
+                }
+
+                $mail->Port = $this->config->smtp_port;
+            } //without this params internal mailer will be used.
+
+            //Recipients
+            $mail->setFrom($this->config->site_email, $this->config->site_name);
+            $mail->addAddress($to);
+
+            $mail->CharSet = $this->config->mail_charset;
+
+            //Content
+            $mail->isHTML(true);
+
+            $mail->Subject  = $subject;
+            $mail->Body     = $body;
+            $mail->AltBody  = $text;
+
+            if (!$mail->send())
+                throw new \Exception($mail->ErrorInfo);
+        }
+        if($mode == "mailjet") {
+            $body = [
+                'Messages' => [
+                [
+                    'From' => [
+                    'Email' => 'contact@madietenligne.fr',
+                    ],
+                    'To' => [
+                    [
+                        'Email' => $to,
+                    ]
+                    ],
+                    'Subject' => $subject,
+                    'TextPart' => $text,
+                    'HTMLPart' => $body
+                ]
+                ]
+            ];
+            $client = new \Mailjet\Client($this->config->api_public_key, $this->config->api_private_key, true, ['version' => 'v3.1']);
+            $response = $client->post(\Mailjet\Resources::$Email, ['body' => $body]);
+            if (!$response->success()) {
+                throw new \Exception("Can't send mail");
+            }
+        } else if ($mode == "sendgrid") {
+            $email = new \SendGrid\Mail\Mail(); 
+            $email->setFrom($this->config->site_email, $this->config->site_name);
+            $email->setSubject($subject);
+            $email->addTo($to);
+            $email->addContent("text/plain", $text);
+            $email->addContent("text/html", $body);
+
+            $sendgridClient = new \SendGrid($this->config->api_private_key);
+            $response = $sendgridClient->send($email); // Don't need to throw this function will throw if error
+        } else {
+            throw new \Exception("not managed mail api");
+        }
     }
 
     /**
