@@ -1752,7 +1752,7 @@ VALUES (:uid, :hash, :expiredate, :ip, :agent, :cookie_crc)
     private function sendMail($mode, $to, $subject, $body, $text)
     {
         if($mode == "smtp") {
-            $mail = new PHPMailer\PHPMailer\PHPMailer();
+            $mail = new \PHPMailer\PHPMailer\PHPMailer();
 
             // Check configuration for custom SMTP parameters
             // Server settings
@@ -1796,8 +1796,7 @@ VALUES (:uid, :hash, :expiredate, :ip, :agent, :cookie_crc)
 
             if (!$mail->send())
                 throw new \Exception($mail->ErrorInfo);
-        }
-        if($mode == "mailjet") {
+        } else if($mode == "mailjet") {
             $body = [
                 'Messages' => [
                 [
