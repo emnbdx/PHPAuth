@@ -1,6 +1,6 @@
 {
-    "name": "phpauth/phpauth",
-    "description": "A secure user authentication class for PHP websites, using a powerful password hashing system and attack blocking to keep your website and users secure.",
+    "name": "emnbdx/phpauth",
+    "description": "Fork of PHPAuth for custom usage",
     "type": "library",
     "keywords": [
         "authentication",
