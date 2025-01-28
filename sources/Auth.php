@@ -269,8 +269,8 @@ class Auth implements AuthInterface
         $return['error'] = false;
         $return['message'] =
             $use_email_activation
-                ? $this->__lang('register_success')
-                : $this->__lang('register_success_emailmessage_suppressed');
+            ? $this->__lang('register_success')
+            : $this->__lang('register_success_emailmessage_suppressed');
         $return['uid'] = $addUser['uid'];
         $return['token'] = $addUser['token'];
 
@@ -560,7 +560,6 @@ class Auth implements AuthInterface
      */
     public function checkSession(string $hash, ?string $device_id = null): bool
     {
-        $ip = self::getIp();
         $block_status = $this->isBlocked();
 
         if ($block_status == 'block') {
@@ -573,7 +572,7 @@ class Auth implements AuthInterface
         }
 
         // INET_NTOA(ip)
-        $query = "SELECT id, uid, expiredate, ip, agent, cookie_crc, device_id FROM {$this->config->table_sessions} WHERE hash = :hash";
+        $query = "SELECT id, uid, expiredate, agent, cookie_crc FROM {$this->config->table_sessions} WHERE hash = :hash";
         $query_prepared = $this->dbh->prepare($query);
         $query_params = [
             'hash' => $hash
@@ -589,24 +588,12 @@ class Auth implements AuthInterface
         $uid = $row['uid'];
         $expire_date = strtotime($row['expiredate']);
         $current_date = strtotime(date('Y-m-d H:i:s'));
-        $db_ip = $row['ip'];
         $db_cookie = $row['cookie_crc'];
-        $db_device_id = $row['device_id'];
 
         if ($current_date > $expire_date) {
             $this->deleteSession($hash);
 
             return false;
-        }
-
-        if ($device_id != null) {
-            if ($db_device_id !== $device_id) {
-                return false;
-            }
-        } else {
-            if ($ip !== $db_ip) {
-                return false;
-            }
         }
 
         if ($db_cookie == sha1($hash . $this->config->site_key)) {
@@ -1093,12 +1080,12 @@ class Auth implements AuthInterface
      */
     public function getCurrentSessionHash(): string
     {
-        if( $this->config->uses_session ) {
+        if ($this->config->uses_session) {
             $expire = $_SESSION[$this->config->cookie_name . '_expire'] ?? 0;
-            if( $expire > 0 && $expire < time() ) {
+            if ($expire > 0 && $expire < time()) {
                 // Session expired, unset the session hash
-                unset( $_SESSION[$this->config->cookie_name] );
-                unset( $_SESSION[$this->config->cookie_name.'_expire'] );
+                unset($_SESSION[$this->config->cookie_name]);
+                unset($_SESSION[$this->config->cookie_name . '_expire']);
                 return '';
             }
             return $_SESSION[$this->config->cookie_name] ?? '';
@@ -1122,7 +1109,7 @@ class Auth implements AuthInterface
      * @param bool $updateSession
      * @return array|null
      */
-    public function getCurrentUser(bool $updateSession = false):?array
+    public function getCurrentUser(bool $updateSession = false): ?array
     {
         $hash = $this->getCurrentSessionHash();
 
@@ -1175,7 +1162,7 @@ class Auth implements AuthInterface
             return false;
         }
 
-        if (password_needs_rehash($hash, PASSWORD_DEFAULT, [ 'cost' => $this->config->bcrypt_cost ])) {
+        if (password_needs_rehash($hash, PASSWORD_DEFAULT, ['cost' => $this->config->bcrypt_cost])) {
             $hash = self::getHash($password, $this->config->bcrypt_cost);
 
             $query = "UPDATE {$this->config->table_users} SET password = ? WHERE id = ?";
@@ -1418,7 +1405,7 @@ class Auth implements AuthInterface
         ];
 
         // When config uses session
-        if( $this->config->uses_session ) {
+        if ($this->config->uses_session) {
             $_SESSION[$this->config->cookie_name] = $data['hash'];
             $_SESSION[$this->config->cookie_name . '_expire'] = $data['expire'];
         } else {
@@ -1469,14 +1456,14 @@ class Auth implements AuthInterface
     protected function removeCookie(): bool
     {
         // Execute this if config uses session
-        if( $this->config->uses_session ) {
+        if ($this->config->uses_session) {
             // Unset session
-            if( isset( $_SESSION[$this->config->cookie_name] ) ) {
+            if (isset($_SESSION[$this->config->cookie_name])) {
                 unset($_SESSION[$this->config->cookie_name]);
             }
         } else {
-             // Remove cookie
-             if(isset($_COOKIE[$this->config->cookie_name])) {
+            // Remove cookie
+            if (isset($_COOKIE[$this->config->cookie_name])) {
                 unset($_COOKIE[$this->config->cookie_name]);
             }
             if (!setcookie($this->config->cookie_name, '', -1, '/')) {
@@ -1742,7 +1729,7 @@ class Auth implements AuthInterface
             return $state;
         }
 
-        if (/*$this->config->verify_email_with_custom && */ is_callable($this->emailValidator) && !call_user_func_array($this->emailValidator, [ $email ])) {
+        if (/*$this->config->verify_email_with_custom && */is_callable($this->emailValidator) && !call_user_func_array($this->emailValidator, [$email])) {
             $this->addAttempt();
             $state['message'] = $this->__lang('email.address_in_banlist');
 
@@ -1771,7 +1758,7 @@ class Auth implements AuthInterface
     protected function checkCaptcha(string $captcha_response): bool
     {
         if (is_callable($this->captchaHandler)) {
-            return call_user_func_array($this->captchaHandler, [ $captcha_response ] );
+            return call_user_func_array($this->captchaHandler, [$captcha_response]);
         }
 
         return true;

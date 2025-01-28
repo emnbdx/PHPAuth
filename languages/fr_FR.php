@@ -30,7 +30,7 @@ $lang['email_changed'] = "L'adresse email a bien &eacute;t&eacute; chang&eacute;
 
 $lang['newemail_match'] = "La nouvelle adresse email est identique à l'adresse email actuelle.";
 
-$lang['account_inactive'] = "Le compte n'a pas encore &eacute;t&eacute; activ&eacute;.";
+$lang['account_inactive'] = "Le compte n'a pas encore &eacute;t&eacute; activ&eacute;. Vous n'avez pas reçu votre email d'activation ? <a href=\"/renvoi-validation\">Demander un nouvel envoi</a>";
 $lang['account_activated'] = "Le compte est desormais activ&eacute;.";
 
 $lang['logged_in'] = "Vous &ecirc;tes maintenant connect&eacute;s.";
@@ -48,8 +48,8 @@ $lang['resetkey_expired'] = "La cl&eacute; de r&eacute;initialisation est expir&
 $lang['password_reset'] = "Le mot de passe a bien &eacute;t&eacute; r&eacute;initialis&eacute;.";
 
 $lang['activationkey_invalid'] = "La cl&eacute; d'activation est invalide.";
-$lang['activationkey_incorrect'] = "La cl&eacute; d'activation est incorrecte.";
-$lang['activationkey_expired'] = "La cl&eacute; d'activation est expir&eacute;e.";
+$lang['activationkey_incorrect'] = "La cl&eacute; d'activation est incorrecte. <a href=\"/renvoi-validation\">Demander un nouvel envoi ?</a>";
+$lang['activationkey_expired'] = "La cl&eacute; d'activation est expir&eacute;e. <a href=\"/renvoi-validation\">Demander un nouvel envoi ?</a>";
 
 $lang['reset_requested'] = "Une demande de r&eacute;initialisation de votre mot de passe a &eacute;t&eacute; envoy&eacute;.";
 $lang['reset_requested_emailmessage_suppressed'] = "Une demande de r&eacute;initialisation de votre mot de passe a &eacutet&eacute cr&eacute&eacute.";
@@ -69,6 +69,6 @@ $lang['email_reset_altbody'] = 'Bonjour,' . "\n\n" . 'Pour reinitialiser votre m
 
 $lang['account_deleted'] = "Compte supprimé.";
 $lang['function_disabled'] = "Cette fonction a &eacute;t&eacute; desactiv&eacute;.";
-$lang['account_not_found'] = "Pas de compte trouv&eacute; avec cette adresse email";
+$lang['account_not_found'] = "Adresse email / mot de passe invalide.";
 
 return $lang;

@@ -105,7 +105,7 @@ If you did not request a password reset key on %1$s recently then this message w
      * @param int $length
      * @return string $key
      */
-    public static function getRandomKey(int $length = AuthInterface::TOKEN_LENGTH):string
+    public static function getRandomKey(int $length = AuthInterface::TOKEN_LENGTH): string
     {
         $dictionary = 'A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6Q7R8S9T0U1V2W3X4Y5Z6a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6';
         $dictionary_length = strlen($dictionary);
@@ -123,20 +123,20 @@ If you did not request a password reset key on %1$s recently then this message w
      *
      * @return string $ip
      */
-    public static function getIp():string
+    public static function getIp(): string
     {
-        if (getenv('REMOTE_ADDR')) {
-            $ipAddress = getenv('REMOTE_ADDR');
-        } elseif (getenv('HTTP_CLIENT_IP')) {
-            $ipAddress = getenv('HTTP_CLIENT_IP');
-        } elseif (getenv('HTTP_X_FORWARDED_FOR')) {
-            $ipAddress = getenv('HTTP_X_FORWARDED_FOR');
-        } elseif (getenv('HTTP_X_FORWARDED')) {
-            $ipAddress = getenv('HTTP_X_FORWARDED');
-        } elseif (getenv('HTTP_FORWARDED_FOR')) {
-            $ipAddress = getenv('HTTP_FORWARDED_FOR');
-        } elseif (getenv('HTTP_FORWARDED')) {
-            $ipAddress = getenv('HTTP_FORWARDED');
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ipAddress = $_SERVER['HTTP_CLIENT_ipAddress'];
+        } else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else if (!empty($_SERVER['HTTP_X_FORWARDED'])) {
+            $ipAddress = $_SERVER['HTTP_X_FORWARDED'];
+        } else if (!empty($_SERVER['HTTP_FORWARDED_FOR'])) {
+            $ipAddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        } else if (!empty($_SERVER['HTTP_FORWARDED'])) {
+            $ipAddress = $_SERVER['HTTP_FORWARDED'];
+        } else if (!empty($_SERVER['REMOTE_ADDR'])) {
+            $ipAddress = $_SERVER['REMOTE_ADDR'];
         } else {
             $ipAddress = '127.0.0.1';
         }
@@ -157,9 +157,9 @@ If you did not request a password reset key on %1$s recently then this message w
      *
      * @return string
      */
-    public static function getHash(string $string, int $cost = 0):string
+    public static function getHash(string $string, int $cost = 0): string
     {
-        $hash_options = ($cost > 0) ? [ 'cost' => $cost ] : [];
+        $hash_options = ($cost > 0) ? ['cost' => $cost] : [];
 
         $hash = password_hash($string, PASSWORD_BCRYPT, $hash_options);
 
@@ -205,11 +205,10 @@ If you did not request a password reset key on %1$s recently then this message w
         ];
 
         if (array_key_exists($key, $lang_new_to_legacy)) {
-            $key = $lang_new_to_legacy[ $key ];
+            $key = $lang_new_to_legacy[$key];
         }
 
         $string = array_key_exists($key, $this->messages_dictionary) ? $this->messages_dictionary[$key] : $key;
         return (func_num_args() > 1) ? vsprintf($string, $args) : $string;
     }
-
 }
