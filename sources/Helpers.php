@@ -126,7 +126,7 @@ If you did not request a password reset key on %1$s recently then this message w
     public static function getIp(): string
     {
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ipAddress = $_SERVER['HTTP_CLIENT_ipAddress'];
+            $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
         } else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
         } else if (!empty($_SERVER['HTTP_X_FORWARDED'])) {
