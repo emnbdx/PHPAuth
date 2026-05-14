@@ -155,7 +155,7 @@ class Auth implements AuthInterface
 
         $user = $this->getBaseUser($uid); // Gets basic user data for a given UID
 
-        if (!$this->password_verify_with_rehash($password, $user['password'], $uid)) {
+        if (!$user || empty($user['password']) || !$this->password_verify_with_rehash($password, $user['password'], $uid)) {
             $this->addAttempt();
             $return['message'] = $this->__lang('account.no_pair_user_and_password');
             return $return;
@@ -1143,7 +1143,7 @@ class Auth implements AuthInterface
 
         $data = $query_prepared->fetch(PDO::FETCH_ASSOC);
 
-        if (!$data) {
+        if (!$data || empty($data['password'])) {
             return false;
         }
 
@@ -1152,13 +1152,13 @@ class Auth implements AuthInterface
 
     /**
      * @param string $password
-     * @param string $hash
+     * @param string|null $hash
      * @param int $uid
      * @return bool
      */
-    public function password_verify_with_rehash(string $password, string $hash, int $uid): bool
+    public function password_verify_with_rehash(string $password, ?string $hash, int $uid): bool
     {
-        if (password_verify($password, $hash) !== true) {
+        if ($hash === null || $hash === '' || password_verify($password, $hash) !== true) {
             return false;
         }
 

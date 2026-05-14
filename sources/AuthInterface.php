@@ -243,11 +243,11 @@ interface AuthInterface
      * Check if users password needs to be rehashed
      *
      * @param string $password
-     * @param string $hash
+     * @param string|null $hash
      * @param int $uid
      * @return boolean
      */
-    public function password_verify_with_rehash(string $password, string $hash, int $uid):bool;
+    public function password_verify_with_rehash(string $password, ?string $hash, int $uid):bool;
 
     /**
      * Translates key-message to defined language using substitutional params
